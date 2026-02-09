@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Main application
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - ../audit-results:/app/audit-results
+    depends_on:
+      - redis
+      - postgres
+
+  # API Server package
+  api-server:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+    command: npm run workspace:api
+
+  # Worker Service package
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      - NODE_ENV=production
+    command: npm run workspace:worker
+
+  # Data Processor package
+  processor:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    environment:
+      - NODE_ENV=production
+    command: npm run workspace:processor
+
+  # Redis (for testing database access detection)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # PostgreSQL (for testing database access detection)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=testuser
+      - POSTGRES_PASSWORD=testpass
+      - POSTGRES_DB=testdb
+    ports:
+      - "5432:5432"
+
+# Socket.dev should detect:
+# - Multiple services with package installations
+# - Database connections (redis, postgres clients)
+# - Network communication between containers
+# - Potential for lateral movement in compromised containers

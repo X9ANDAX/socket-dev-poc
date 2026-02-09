@@ -1,42 +1,28 @@
 # Dependencies
 node_modules/
 package-lock.json
-yarn.lock
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Logs
-logs/
-*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# Directory for instrumented libs
-lib-cov/
-
-# Coverage directory
+# Testing
 coverage/
-*.lcov
 .nyc_output/
+*.lcov
 
-# Build output
-dist/
+# Production
 build/
+dist/
+*.tgz
 
-# Temporary files
-temp/
-tmp/
-*.tmp
+# Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # IDE
 .vscode/
@@ -44,10 +30,35 @@ tmp/
 *.swp
 *.swo
 *~
+.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
 
 # OS
-.DS_Store
 Thumbs.db
+.DS_Store
 
-# Socket.dev reports
-socket-report*.json
+# Temporary files
+temp/
+tmp/
+*.tmp
+temp-*/
+
+# Audit results (optional - you may want to commit these for comparison)
+# Uncomment to exclude from git:
+# audit-results/
+# socket-*.json
+# npm-audit.json
+
+# Socket.dev
+.socket/
+
+# Docker
+docker-compose.override.yml
+
+# Build artifacts
+build/

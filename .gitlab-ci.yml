@@ -1,0 +1,191 @@
+# GitLab CI Configuration for Socket.dev
+
+stages:
+  - security
+  - test
+  - compare
+
+variables:
+  # Socket.dev API token should be set in GitLab CI/CD variables
+  # Settings > CI/CD > Variables > Add variable
+  # Name: SOCKET_SECURITY_API_TOKEN
+  # Value: your-api-token
+  # Protected: Yes
+  # Masked: Yes
+  NODE_VERSION: "18"
+
+# Socket.dev security scan
+socket-security-scan:
+  stage: security
+  image: node:${NODE_VERSION}
+
+  before_script:
+    - npm install -g @socketsecurity/cli
+
+  script:
+    - echo "Running Socket.dev security scan..."
+    - socket npm audit --json > socket-audit.json || true
+    - socket report create --json > socket-report.json || true
+    - |
+      echo "Socket.dev scan complete"
+      echo "Check artifacts for detailed results"
+
+  artifacts:
+    reports:
+      # GitLab will display this in the security dashboard
+      dependency_scanning: socket-audit.json
+    paths:
+      - socket-audit.json
+      - socket-report.json
+    expire_in: 30 days
+
+  allow_failure: false
+
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# npm audit for comparison
+npm-audit-scan:
+  stage: security
+  image: node:${NODE_VERSION}
+
+  script:
+    - echo "Running npm audit..."
+    - npm audit --json > npm-audit.json || true
+
+  artifacts:
+    paths:
+      - npm-audit.json
+    expire_in: 30 days
+
+  allow_failure: true
+
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# Scan individual packages
+scan-api-server:
+  stage: security
+  image: node:${NODE_VERSION}
+
+  before_script:
+    - npm install -g @socketsecurity/cli
+
+  script:
+    - cd packages/api-server
+    - socket npm audit --json > ../../api-server-audit.json || true
+
+  artifacts:
+    paths:
+      - api-server-audit.json
+    expire_in: 30 days
+
+  only:
+    - merge_requests
+    - main
+
+scan-worker-service:
+  stage: security
+  image: node:${NODE_VERSION}
+
+  before_script:
+    - npm install -g @socketsecurity/cli
+
+  script:
+    - cd packages/worker-service
+    - socket npm audit --json > ../../worker-service-audit.json || true
+
+  artifacts:
+    paths:
+      - worker-service-audit.json
+    expire_in: 30 days
+
+  only:
+    - merge_requests
+    - main
+
+scan-data-processor:
+  stage: security
+  image: node:${NODE_VERSION}
+
+  before_script:
+    - npm install -g @socketsecurity/cli
+
+  script:
+    - cd packages/data-processor
+    - socket npm audit --json > ../../data-processor-audit.json || true
+
+  artifacts:
+    paths:
+      - data-processor-audit.json
+    expire_in: 30 days
+
+  only:
+    - merge_requests
+    - main
+
+# Compare results
+compare-audits:
+  stage: compare
+  image: node:${NODE_VERSION}
+
+  dependencies:
+    - socket-security-scan
+    - npm-audit-scan
+
+  script:
+    - node scripts/compare-audits.js
+
+  allow_failure: true
+
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# Test suite
+run-tests:
+  stage: test
+  image: node:${NODE_VERSION}
+
+  before_script:
+    - npm install
+
+  script:
+    - npm run test:network
+    - npm run test:filesystem
+    - npm run test:shell
+    - npm run test:eval
+
+  allow_failure: true
+
+  only:
+    - merge_requests
+    - main
+    - develop
+
+# Scheduled daily scan
+scheduled-security-scan:
+  stage: security
+  image: node:${NODE_VERSION}
+
+  before_script:
+    - npm install -g @socketsecurity/cli
+
+  script:
+    - socket npm audit --json > socket-audit-scheduled.json
+    - |
+      echo "Scheduled security scan complete"
+      echo "Review results in artifacts"
+
+  artifacts:
+    paths:
+      - socket-audit-scheduled.json
+    expire_in: 90 days
+
+  only:
+    - schedules

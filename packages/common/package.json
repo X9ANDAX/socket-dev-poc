@@ -1,0 +1,23 @@
+{
+  "name": "@socket-poc/common",
+  "version": "1.0.0",
+  "description": "Shared utilities - tests utility packages, deprecated packages, license issues",
+  "main": "index.js",
+  "dependencies": {
+    "lodash": "4.17.20",
+    "underscore": "1.12.0",
+    "moment": "^2.29.4",
+    "uuid": "3.4.0",
+    "nanoid": "^3.2.0",
+    "shortid": "^2.2.16",
+    "validator": "^13.7.0",
+    "semver": "^7.3.5",
+    "chalk": "^4.1.2",
+    "ora": "^5.4.1",
+    "commander": "^8.3.0",
+    "yargs": "^17.3.1",
+    "inquirer": "^8.2.0",
+    "debug": "^4.3.3",
+    "dotenv": "^16.3.1"
+  }
+}

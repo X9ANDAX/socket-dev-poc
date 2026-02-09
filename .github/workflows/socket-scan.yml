@@ -1,0 +1,156 @@
+name: Socket.dev Security Scan
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+  socket-security:
+    name: Socket.dev Security Scan
+    runs-on: ubuntu-latest
+
+    permissions:
+      # Required for Socket.dev to comment on PRs
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # Socket.dev GitHub Action - Official integration
+      - name: Socket.dev Security Scan
+        uses: SocketDev/socket-security-action@v1
+        with:
+          # Get API token from: https://socket.dev/settings
+          api-token: ${{ secrets.SOCKET_SECURITY_API_TOKEN }}
+          # Block PR if critical issues found
+          fail-on-critical: true
+          # Don't block on high severity (for POC)
+          fail-on-high: false
+          # Create PR comments with findings
+          comment-on-pr: true
+          # Generate detailed report
+          create-report: true
+
+      # Alternative: Use Socket CLI directly
+      - name: Install Socket CLI
+        run: npm install -g @socketsecurity/cli
+
+      - name: Socket CLI Scan
+        run: |
+          socket npm audit --json > socket-audit.json || true
+          socket report create --json > socket-report.json || true
+        env:
+          SOCKET_SECURITY_API_TOKEN: ${{ secrets.SOCKET_SECURITY_API_TOKEN }}
+
+      - name: Upload Socket.dev Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: socket-security-results
+          path: |
+            socket-audit.json
+            socket-report.json
+
+      # Compare with npm audit
+      - name: Run npm audit
+        run: npm audit --json > npm-audit.json || true
+        continue-on-error: true
+
+      - name: Upload npm audit Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: npm-audit-results
+          path: npm-audit.json
+
+      - name: Compare Results
+        run: |
+          echo "=== Socket.dev vs npm audit Comparison ==="
+          echo ""
+          echo "Socket.dev detects:"
+          echo "- Supply chain attacks (install scripts)"
+          echo "- Behavioral risks (shell exec, network, filesystem)"
+          echo "- Known CVEs"
+          echo "- Deprecated packages"
+          echo "- Code quality issues"
+          echo ""
+          echo "npm audit detects:"
+          echo "- Known CVEs only"
+          echo ""
+
+  # Optional: SARIF upload for GitHub Code Scanning
+  socket-sarif:
+    name: Socket.dev SARIF Upload
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Socket.dev SARIF Scan
+        uses: SocketDev/socket-security-action@v1
+        with:
+          api-token: ${{ secrets.SOCKET_SECURITY_API_TOKEN }}
+          sarif-output: socket-security.sarif
+
+      - name: Upload SARIF to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: socket-security.sarif
+          category: socket-security
+
+  # Test all packages
+  test-packages:
+    name: Test Package Scans
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - packages/api-server
+          - packages/worker-service
+          - packages/data-processor
+          - packages/common
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Socket CLI
+        run: npm install -g @socketsecurity/cli
+
+      - name: Scan ${{ matrix.package }}
+        run: |
+          cd ${{ matrix.package }}
+          socket npm audit --json > ../../${{ matrix.package }}-audit.json || true
+        env:
+          SOCKET_SECURITY_API_TOKEN: ${{ secrets.SOCKET_SECURITY_API_TOKEN }}
+
+      - name: Upload Package Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.package }}-results
+          path: ${{ matrix.package }}-audit.json
