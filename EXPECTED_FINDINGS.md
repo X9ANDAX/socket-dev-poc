@@ -4,7 +4,28 @@ This document details what Socket.dev SHOULD detect in this POC. Use this to eva
 
 ## Critical Severity
 
-### 1. Install Scripts (Supply Chain Attack Vector)
+### 1. Known Malware Package (Malicious Code)
+
+**Package:** @riyanofficial/baileys@3.0.2
+
+**Why Critical:**
+- This is a KNOWN MALICIOUS PACKAGE intentionally added for testing
+- Used to test Socket.dev's malware detection capabilities
+- Contains malicious code that exfiltrates data or performs unauthorized actions
+- **NEVER install or run this package - it is for STATIC SCANNING ONLY**
+
+**Security Warning:**
+⚠️ **DO NOT run `npm install` with this package present**
+⚠️ This package is for CI/CD scanning tests only
+⚠️ Push to GitLab/GitHub for Socket.dev to scan remotely
+
+**Expected Alert:** Malware detected, suspicious behavior, known malicious package
+
+**Purpose:** Validate that Socket.dev can detect known malicious packages in the npm registry
+
+---
+
+### 2. Install Scripts (Supply Chain Attack Vector)
 
 **Package:** socket-dev-poc (root)
 
@@ -301,12 +322,12 @@ Socket.dev should detect issues in these categories:
 ## Expected Alert Count
 
 **Minimum alerts expected:**
-- Critical: 15+
+- Critical: 16+ (includes known malware package)
 - High: 40+
 - Medium: 20+
 - Low: 10+
 
-**Total: 85+ alerts**
+**Total: 86+ alerts**
 
 ---
 

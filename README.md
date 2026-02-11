@@ -208,6 +208,7 @@ Follow `EVALUATION_CHECKLIST.md` systematically to evaluate:
 
 | Category | Count | Severity |
 |----------|-------|----------|
+| Known Malware | 1 | Critical |
 | Install Scripts | 2 | Critical |
 | Shell Execution | 5+ | Critical |
 | Dynamic Code Execution | 5+ | Critical |
@@ -217,7 +218,7 @@ Follow `EVALUATION_CHECKLIST.md` systematically to evaluate:
 | Database Access | 4 | Medium |
 | Deprecated Packages | 4 | Medium |
 | Quality Issues | 10+ | Low |
-| **TOTAL** | **85+** | **Mixed** |
+| **TOTAL** | **86+** | **Mixed** |
 
 npm audit should find: **12-15 CVEs only**
 
@@ -252,14 +253,29 @@ npm run workspace:processor        # Run data processor
 
 ## Security Notice
 
+⚠️ **CRITICAL WARNING** ⚠️
+
 This POC intentionally includes:
+- **Known malicious package:** `@riyanofficial/baileys@3.0.2` (MALWARE - DO NOT INSTALL)
 - Vulnerable packages with known CVEs
 - Deprecated and unmaintained packages
 - Packages with dangerous capabilities
 - Install scripts (potential attack vectors)
 
-**DO NOT use this POC in production.**
-This is for **evaluation purposes only**.
+### ⛔ DO NOT RUN `npm install` LOCALLY ⛔
+
+**The package `@riyanofficial/baileys@3.0.2` is a known malicious package.**
+
+This package is ONLY for testing Socket.dev's malware detection capabilities:
+- ✅ Push to GitLab/GitHub for CI/CD scanning
+- ✅ Use Socket.dev CLI to scan package.json (without installing)
+- ❌ DO NOT run `npm install`
+- ❌ DO NOT execute any code from this package
+- ❌ DO NOT use in production or development environments
+
+**Purpose:** Validate Socket.dev can detect real-world malware in the npm supply chain.
+
+**This is for security tool evaluation only.**
 
 ## Support & Resources
 
